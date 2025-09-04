@@ -114,4 +114,92 @@ plt.xlabel("Qubit index"); plt.ylabel("Fraction of 1s (P(1))"); plt.title("Per-q
 plt.xticks(x, [f"q{j}" for j in range(k)]); plt.ylim(0, 1); plt.legend(); plt.tight_layout()
 
 fig4.savefig("per_qubit_bias.png", dpi=300)
-plt.show()
+
+
+
+
+# bonus 1
+print("--- Bonus 1 ---")
+
+import numpy as np
+
+def monobit_summary(counts, result,  k):
+    shots = sum(counts.values())
+    bitstrings = result[0].data.meas.get_bitstrings()
+    M = np.array([[int(b) for b in s[::-1]] for s in bitstrings], dtype=int)
+    p = M.mean(axis=0)                 # per-qubit fraction of 1s
+    overall = float(p.mean())
+    se = np.sqrt(0.25/shots)           # rough expected fluctuation for a fair coin
+    suspect = np.abs(p - 0.5) > 3*se   # rule-of-thumb: outside ±3·SE
+    return p, overall, se, suspect
+
+pA, overallA, seA, flagA = monobit_summary(countsA, resultA, k)
+print("A per-qubit P(1):", np.round(pA, 3), "overall:", round(overallA, 3), "SE~", round(seA, 4))
+print("A suspect qubits:", np.where(flagA)[0].tolist())
+
+pB, overallB, seB, flagB = monobit_summary(countsB, resultB, k)
+print("B per-qubit P(1):", np.round(pB, 3), "overall:", round(overallB, 3), "SE~", round(seB, 4))
+print("B suspect qubits:", np.where(flagB)[0].tolist())
+
+# bonus 2
+print("--- Bonus 2 ---")
+
+def runs_fraction_per_qubit(counts, result, k):
+    bitstrings = result[0].data.meas.get_bitstrings()
+    M = np.array([[int(b) for b in s[::-1]] for s in bitstrings], dtype=int)
+    flips = (M[1:] != M[:-1]).mean(axis=0)   # fraction of shot-to-shot flips per qubit
+    return flips
+
+flipsA = runs_fraction_per_qubit(countsA, resultA, k)
+print("A runs (flip fraction) per qubit:", np.round(flipsA, 3))
+
+flipsB = runs_fraction_per_qubit(countsB, resultB, k)
+print("B runs (flip fraction) per qubit:", np.round(flipsB, 3))
+
+
+# bonus 3
+
+print("--- Bonus 3 ---")
+
+
+def autocorr_lag1(counts, result, k):
+    bitstrings = result[0].data.meas.get_bitstrings()
+    M = np.array([[int(b) for b in s[::-1]] for s in bitstrings], dtype=int)
+    X = M - M.mean(axis=0, keepdims=True)
+    num = (X[1:]*X[:-1]).sum(axis=0)
+    den = (X[:-1]**2).sum(axis=0)
+    ac1 = np.divide(num, den, out=np.zeros_like(num, dtype=float), where=den>0)
+    return ac1
+
+ac1A = autocorr_lag1(countsA, resultA, k)
+print("A lag-1 autocorr per qubit:", np.round(ac1A, 3))
+
+ac1B = autocorr_lag1(countsB, resultB, k)
+print("B lag-1 autocorr per qubit:", np.round(ac1B, 3))
+
+
+# bonus 4
+
+print("--- Bonus 4 ---")
+
+import itertools
+
+def interqubit_corr(counts, result, k):
+    bitstrings = result[0].data.meas.get_bitstrings()
+    M = np.array([[int(b) for b in s[::-1]] for s in bitstrings], dtype=int)
+    X = M - M.mean(axis=0, keepdims=True)
+    cov = (X.T @ X) / (len(M)-1)
+    std = X.std(axis=0, ddof=1)
+    R = cov / (std[:,None]*std[None,:])
+    np.fill_diagonal(R, 1.0)
+    return R
+
+R_A = interqubit_corr(countsA, resultA, k)
+flags = [(i,j,float(R_A[i,j])) for i,j in itertools.combinations(range(k),2) if abs(R_A[i,j])>0.1]
+print("A suspicious pairs:", flags[:10])
+
+R_B = interqubit_corr(countsB, resultB, k)
+flags = [(i,j,float(R_B[i,j])) for i,j in itertools.combinations(range(k),2) if abs(R_B[i,j])>0.1]
+print("B suspicious pairs:", flags[:10])
+
+print("--- Bonus END ---")

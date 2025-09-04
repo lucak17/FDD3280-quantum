@@ -41,8 +41,8 @@ print("qiskit version: ",qiskit.__version__,
 
 # Task 1
 # Read environmental variables
-TOKEN = os.environ.get("TOKEN_QISKIT")  # REQUIRED
-INSTANCE = None  # OPTIONAL: e.g., "crn:v1:bluemix:public:quantum-computing:us-east:...:..."
+TOKEN = os.environ.get("TOKEN_QISKIT", None)  # REQUIRED
+INSTANCE = os.environ.get("INSTANCE_QISKIT", None)  # OPTIONAL: e.g., "crn:v1:bluemix:public:quantum-computing:us-east:...:..."
 
 QiskitRuntimeService.save_account(
     channel="ibm_quantum_platform",
