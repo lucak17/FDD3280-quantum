@@ -1,6 +1,8 @@
 import numpy as np, matplotlib.pyplot as plt
 import qiskit, qiskit_ibm_runtime, qiskit_aer
 import math
+import matplotlib.pyplot as plt
+
 
 DTYPE = np.complex128
 
@@ -132,18 +134,17 @@ def bell_state() -> np.ndarray:
     psi = apply(CNOT_01, psi)
     return normalize(psi)
 
+
+## Task 1
+
 print("qiskit version: ",qiskit.__version__, 
       "\nqiskit_ibm_runtime version: ", qiskit_ibm_runtime.__version__, 
       "\nqiskit_aer version: ", qiskit_aer.__version__)
 
-# service = QiskitRuntimeService()
 
-# Example
 psi = ket00()
 assert np.isclose(np.linalg.norm(psi), 1.0)
 print(psi)
-
-
 
 # Quick unit tests
 assert np.allclose(H.conj().T @ H, I2)
@@ -154,8 +155,6 @@ assert np.allclose(CNOT_10.conj().T @ CNOT_10, np.eye(4))
 psi_bell = bell_state()
 print("Bell state vector:", np.round(psi_bell, 6))
 
-
-import matplotlib.pyplot as plt
 
 BITSTR = ["00","01","10","11"]
 
@@ -178,5 +177,79 @@ plt.xlabel("bitstring"); plt.ylabel("counts"); plt.title("Bell state measurement
 fig1.savefig("bell_state_hist.png", dpi=400)
 plt.show()
 
-
 QubitSystem(psi_bell, label="Bell state (|00⟩+|11⟩)/√2").viz_circle()
+
+
+
+## Task 2
+
+def expand_1q_n(U: np.ndarray, t: int, n: int) -> np.ndarray:
+    op = np.array([[1]], dtype=U.dtype)
+    for q in range(n):
+        op = np.kron(op, U if q == t else I2)
+    return op
+
+# Apply CSWAP, with ancilla as control
+P0 = np.array([[1,0],[0,0]], dtype=DTYPE)  # |0><0| on ancilla
+P1 = np.array([[0,0],[0,1]], dtype=DTYPE)  # |1><1| on ancilla
+SWAP_A0_B0 = np.array([
+    [1,0,0,0],
+    [0,0,1,0],
+    [0,1,0,0],
+    [0,0,0,1]
+], dtype=DTYPE)
+CSWAP = np.kron(P0, np.eye(4, dtype=DTYPE)) + np.kron(P1, SWAP_A0_B0)
+
+def swap_test_fidelity(psi: np.ndarray, phi: np.ndarray, verbose: bool = True):
+    # Ensure proper shapes and normalization
+    psi = normalize(np.asarray(psi, dtype=DTYPE).flatten())
+    phi = normalize(np.asarray(phi, dtype=DTYPE).flatten())
+
+    # |0>_output ⊗ |ψ>_A ⊗ |φ>_B
+    init = np.kron(np.array([1,0], dtype=DTYPE), np.kron(psi, phi))
+
+    # H on output (MSB), CSWAP(A,B) controlled by output, then H on output
+    U_Ho = expand_1q_n(H, t=0, n=3)
+    state = U_Ho @ init
+    state = CSWAP @ state
+    state = U_Ho @ state
+
+    # Fidelity
+    prob = np.abs(state)**2
+    assert np.isclose(prob.sum(), 1.0), "Total probability must be 1."
+    prob1 = float(prob[4:].sum())  # indices with output=1 (MSB=1 → indices 4..7)
+    F_hat = 1.0 - 2.0*prob1
+
+    # Exact fidelity from inner product
+    F_exact = float(np.abs(np.vdot(psi, phi))**2)
+
+    return F_hat, F_exact, prob1, state
+
+
+# Test states
+ket0 = np.array([1,0], dtype=DTYPE)
+ket1 = np.array([0,1], dtype=DTYPE)
+ket_plus = normalize(H @ ket0)
+
+tests = [
+    ("psi = phi = 0 ", ket0, ket0),
+    ("psi = 0, phi = 1 ", ket0, ket1),
+    ("psi = +, phi = 0 ", ket_plus, ket0),
+]
+
+print("Fidelity test:")
+for name, psi, phi in tests:
+    print(f"-- {name} --")
+    F_hat, F_exact, prob1, state = swap_test_fidelity(psi, phi, verbose=True)
+    # Sanity checks vs expected analytic values
+    print("F_exact: ", F_exact, " F_hat: ", F_hat)
+    print("P(output=1): ", prob1)
+
+# Random example
+rng = np.random.default_rng(534)
+psi_rand = normalize(rng.normal(size=2) + 1j*rng.normal(size=2))
+phi_rand = normalize(rng.normal(size=2) + 1j*rng.normal(size=2))
+print("\n-- Random states example --")
+F_hat_r, F_exact_r, P1_r, _ = swap_test_fidelity(psi_rand, phi_rand, verbose=True)
+print("F_exact: ", F_exact_r, " F_hat: ", F_hat_r)
+print("P(output=1): ", P1_r)
