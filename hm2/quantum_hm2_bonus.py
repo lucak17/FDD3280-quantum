@@ -11,6 +11,11 @@ DTYPE = np.complex128
 NQUBIT = 3
 
 
+I = np.eye(2, dtype=DTYPE)
+H = (1/np.sqrt(2)) * np.array([[1,  1],
+                               [1, -1]], 
+                               dtype=DTYPE)
+
 def basis_state(bits):
     dim = 2**NQUBIT
     index = sum(b * (2**i) for i, b in enumerate(bits)) 
@@ -18,15 +23,9 @@ def basis_state(bits):
     state[index] = 1.0
     return state
 
-
-I = np.eye(2, dtype=DTYPE)
-H = (1/np.sqrt(2)) * np.array([[1,  1],
-                               [1, -1]], 
-                               dtype=DTYPE)
-
 def one_qubit_gate_lsb(n_qubits: int, gate: np.ndarray, target: int) -> np.ndarray:
     """
-    Build the 2**n x 2**n matrix applying 1-qubit gate to single target (q0 is LSB)
+    Build the 2**n x 2**n matrix applying single qubit gate to single target (q0 is LSB)
     looping from LSB->MSB.
     """
     if n_qubits < 1:
