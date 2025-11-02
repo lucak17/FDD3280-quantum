@@ -1,5 +1,12 @@
 import os
 import numpy as np, matplotlib.pyplot as plt
+plt.rcParams.update({
+    "axes.titlesize": 18,
+    "axes.labelsize": 16,
+    "xtick.labelsize": 14,
+    "ytick.labelsize": 14,
+    "legend.fontsize": 14,
+})
 
 BCS = 0.0
 N_GRID_POINTS = 64
@@ -238,7 +245,7 @@ def convergence_test(N=65, lam=0.25, steps=47, shots_list=(1000,4000,8000,16000,
         plt.plot(x[:], profiles_for_plot[ss][:], linestyle='--', marker="x", label=f"Quantum (M={ss})")
     plt.xlabel("x")
     plt.ylabel("u(x, T)")
-    plt.title(f"Heat equation Classic vs Quantum (T={T:.4g})")
+    plt.title(f"Diffusion: classical vs quantum (T_s={steps})")
     plt.legend()
     plt.grid()
     plt.tight_layout()
@@ -252,7 +259,7 @@ def convergence_test(N=65, lam=0.25, steps=47, shots_list=(1000,4000,8000,16000,
         plt.plot(x[:], u_analytic[:] - profiles_for_plot[ss][:], linestyle='--', marker="x", label=f"Quantum (M={ss})")
     plt.xlabel("x")
     plt.ylabel("u_c(x, T) - u_q(x, T)")
-    plt.title(f"Heat equation Classic vs Quantum - Error (T={T:.4g})")
+    plt.title(f"Diffusion: classical vs quantum - Error (T_s={steps})")
     plt.legend()
     plt.grid()
     plt.tight_layout()

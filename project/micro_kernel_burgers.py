@@ -1,9 +1,15 @@
 import os
 import numpy as np, matplotlib.pyplot as plt
+plt.rcParams.update({
+    "axes.titlesize": 18,
+    "axes.labelsize": 16,
+    "xtick.labelsize": 14,
+    "ytick.labelsize": 14,
+    "legend.fontsize": 14,
+})
 
 BCS = 0.0
 N_GRID_POINTS = 64
-LAMBDA = 0.25
 NU_BURGER = 0.01/np.pi
 STEPS = 40
 SHOT_LIST =  [512, 1024, 2048]
@@ -306,13 +312,14 @@ def burgers_test(N=63, steps=40, shots_list=(1000, 4000, 8000), repetitions=3, n
     # Plot
     fig = plt.figure()
     u_mc, u_ref = profiles[shots_list[0]]
-    plt.plot(x[:], u_ref[:], label=f"classical")
+    plt.plot(x[:], u_ref[:], label=f"Classical")
     for M in shots_list:
         u_mc, u_ref = profiles[M]
-        plt.plot(x[:], u_mc[:], linestyle='--', marker="x", label=f"quantum (M={M})")
+        plt.plot(x[:], u_mc[:], linestyle='--', marker="x", label=f"Quantum (M={M})")
     plt.xlabel("x"), plt.ylabel("u(x, T)")
-    plt.title("Burgers: classical vs quantum")
+    plt.title(f"Burgers: classical vs quantum (T_s={steps})")
     plt.legend(); plt.grid(); plt.tight_layout()
+    plt.legend(loc='upper right')
     name_fig = f"burgers_steps{steps}_batch{batch_size}_noise{noise}.pdf"
     fig.savefig(name_fig, dpi=600, bbox_inches="tight")
     plt.show()

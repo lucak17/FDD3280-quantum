@@ -5,12 +5,20 @@
 import os
 import numpy as np, matplotlib.pyplot as plt
 
+plt.rcParams.update({
+    "axes.titlesize": 18,
+    "axes.labelsize": 16,
+    "xtick.labelsize": 14,
+    "ytick.labelsize": 14,
+    "legend.fontsize": 14,
+})
+
 BCS = 0.0
 N_GRID_POINTS = 64
 LAMBDA = 0.8
 C_WAVE = 1.0  # wave speed c
 STEPS = 30
-SHOT_LIST =  [100000, 200000]
+SHOT_LIST =  [50000, 100000, 200000]
 BATCH_SIZE = 1
 REPETITIONS = 3
 
@@ -337,14 +345,14 @@ def wave_test(N=N_GRID_POINTS, steps=STEPS, CFL=LAMBDA, c=C_WAVE,
     # Plot one representative profile per shots choice
     fig = plt.figure()
     xx, E_ref, E_q, E_ex, T = profiles[shots_list[0]]
-    plt.plot(xx, E_ex, label=f"Analytic (T={T:.3f})")
+    plt.plot(xx, E_ex, label="Analytic")
     for ss in shots_list:
         xx, E_ref, E_q, E_ex, T = profiles[ss]
         #plt.plot(xx, E_ref, "--", label=f"classical")
         plt.plot(xx, E_q, linestyle='--', marker="x", label=f"Quantum (M={ss})")
 
     plt.xlabel("x"); plt.ylabel("E(x,T)")
-    plt.title("Wave: classical vs quantum")
+    plt.title(f"Wave: classical vs quantum (T_s={steps})")
     plt.grid(True); plt.legend(); plt.tight_layout()
     name_fig = f"wave_steps{steps}_N{N}_CFL{CFL:.2f}_batch{batch_size}_noise{noise}.pdf"
     fig.savefig(name_fig, dpi=600, bbox_inches="tight")
